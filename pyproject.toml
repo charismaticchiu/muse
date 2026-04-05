@@ -29,5 +29,8 @@ muse = "muse.cli:main"
 [tool.hatch.build.targets.wheel]
 packages = ["src/muse"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"data/personas" = "data/personas"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
