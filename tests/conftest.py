@@ -1,7 +1,31 @@
 import json
+import struct
+import zlib
 from pathlib import Path
 
 import pytest
+
+
+def _make_minimal_png(path: Path, width: int = 64, height: int = 64) -> None:
+    """Create a minimal valid white PNG without PIL (broken on Python 3.14)."""
+
+    def _chunk(chunk_type: bytes, data: bytes) -> bytes:
+        c = chunk_type + data
+        crc = struct.pack(">I", zlib.crc32(c) & 0xFFFFFFFF)
+        return struct.pack(">I", len(data)) + c + crc
+
+    header = b"\x89PNG\r\n\x1a\n"
+    ihdr_data = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
+    ihdr = _chunk(b"IHDR", ihdr_data)
+
+    # White pixel rows: filter byte (0) + RGB(255,255,255) * width
+    raw_row = b"\x00" + b"\xff\xff\xff" * width
+    raw_data = raw_row * height
+    idat = _chunk(b"IDAT", zlib.compress(raw_data))
+    iend = _chunk(b"IEND", b"")
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(header + ihdr + idat + iend)
 
 
 @pytest.fixture
@@ -38,12 +62,8 @@ def mock_provider():
     provider.supports_vision = True
 
     def fake_generate(prompt, **kwargs):
-        # Create a 1x1 white PNG
         img_path = kwargs.get("output_path", Path("/tmp/mock.png"))
-        img_path.parent.mkdir(parents=True, exist_ok=True)
-        from PIL import Image
-        img = Image.new("RGB", (64, 64), color="white")
-        img.save(img_path)
+        _make_minimal_png(img_path)
         return GeneratedImage(
             path=img_path,
             prompt=prompt,
