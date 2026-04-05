@@ -65,7 +65,7 @@ class SessionManager:
         step_json.write_text(json.dumps(step.to_dict(), indent=2))
 
         dest = steps_dir / image_filename
-        if image.path.exists():
+        if image.path.exists() and image.path.resolve() != dest.resolve():
             shutil.copy2(image.path, dest)
 
         session.current_step = step_num

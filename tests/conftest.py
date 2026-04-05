@@ -71,7 +71,10 @@ def mock_provider():
             metadata={"model": "mock-v1"},
         )
 
+    def fake_edit(image, prompt, **kwargs):
+        return fake_generate(prompt, **kwargs)
+
     provider.generate.side_effect = fake_generate
-    provider.edit.side_effect = fake_generate
+    provider.edit.side_effect = fake_edit
     provider.describe.return_value = "A white square image."
     return provider
