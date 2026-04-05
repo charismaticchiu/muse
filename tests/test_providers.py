@@ -102,3 +102,15 @@ class TestOpenAIProviderAvailability:
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
         from muse.providers.openai_provider import OpenAIProvider
         assert OpenAIProvider.is_available() is True
+
+
+class TestGeminiProviderAvailability:
+    def test_not_available_without_key(self, monkeypatch):
+        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        from muse.providers.gemini_provider import GeminiProvider
+        assert GeminiProvider.is_available() is False
+
+    def test_available_with_key(self, monkeypatch):
+        monkeypatch.setenv("GEMINI_API_KEY", "AI-test")
+        from muse.providers.gemini_provider import GeminiProvider
+        assert GeminiProvider.is_available() is True
