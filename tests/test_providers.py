@@ -90,3 +90,15 @@ class TestProviderRegistry:
 
         provider = registry.get_vision_provider()
         assert provider.supports_vision is True
+
+
+class TestOpenAIProviderAvailability:
+    def test_not_available_without_key(self, monkeypatch):
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        from muse.providers.openai_provider import OpenAIProvider
+        assert OpenAIProvider.is_available() is False
+
+    def test_available_with_key(self, monkeypatch):
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+        from muse.providers.openai_provider import OpenAIProvider
+        assert OpenAIProvider.is_available() is True
