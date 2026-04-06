@@ -5,6 +5,10 @@ import sys
 from pathlib import Path
 
 import click
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.panel import Panel
+from rich.table import Table
 
 from muse.config import (
     MuseConfig,
@@ -18,6 +22,11 @@ from muse.preview import show_image
 from muse.providers import build_registry
 from muse.review import ReviewEngine
 from muse.session import SessionManager
+
+# stderr console for spinners (won't interfere with captured stdout in tests)
+_status_console = Console(stderr=True)
+# stdout console for rich-formatted output
+_console = Console()
 
 
 def _get_context():
@@ -84,7 +93,8 @@ def new(prompt, provider, size):
         kwargs["size"] = size or config.size
 
     try:
-        result = prov.generate(prompt, **kwargs)
+        with _status_console.status("[bold violet]Generating...", spinner="dots"):
+            result = prov.generate(prompt, **kwargs)
     except Exception as e:
         click.echo(f"  Error: {e}", err=True)
         sys.exit(1)
@@ -141,7 +151,8 @@ def tweak(prompt, provider, size, from_step):
         kwargs["size"] = size or config.size
 
     try:
-        result = prov.edit(current_image, prompt, **kwargs)
+        with _status_console.status("[bold violet]Iterating...", spinner="dots"):
+            result = prov.edit(current_image, prompt, **kwargs)
     except Exception as e:
         click.echo(f"  Error: {e}", err=True)
         sys.exit(1)
@@ -184,7 +195,8 @@ def review(persona):
         sys.exit(1)
 
     try:
-        result = engine.review(vision_prov, current_image, persona_name, history)
+        with _status_console.status("[bold violet]Reviewing...", spinner="dots"):
+            result = engine.review(vision_prov, current_image, persona_name, history)
     except FileNotFoundError as e:
         click.echo(f"  {e}")
         sys.exit(1)
@@ -193,7 +205,12 @@ def review(persona):
         sys.exit(1)
 
     click.echo()
-    click.echo(result)
+    _console.print(Panel(
+        Markdown(result),
+        title=f"[bold]Review[/bold] [dim]({persona_name})[/dim]",
+        border_style="violet",
+        padding=(1, 2),
+    ))
     session_mgr.save_review(session_name, session.current_step, result)
 
 
@@ -276,19 +293,23 @@ def providers():
     muse_home, config, session_mgr, registry = _get_context()
     available = detect_providers()
 
-    click.echo()
-    click.echo("  Provider    Status")
-    click.echo("  " + "-" * 30)
+    table = Table(show_header=True, header_style="bold", box=None, padding=(0, 2))
+    table.add_column("Provider", style="white")
+    table.add_column("Status")
 
     provider_names = ["openai", "gemini"]
     for name in provider_names:
-        status = "ready" if name in available else "no key"
-        symbol = "+" if name in available else "-"
-        click.echo(f"  {symbol} {name:<12} {status}")
+        if name in available:
+            table.add_row(name, "[green]ready[/green]")
+        else:
+            table.add_row(name, "[dim]no key[/dim]")
 
-    click.echo()
+    _console.print()
+    _console.print(table)
+    _console.print()
+
     if available:
-        click.echo(f"  Active: {available[0]} (auto-detected)")
+        _console.print(f"  Active: [bold]{available[0]}[/bold] (auto-detected)")
     else:
         click.echo("  No providers found. Set an API key:")
         click.echo('    export OPENAI_API_KEY="sk-..."')
