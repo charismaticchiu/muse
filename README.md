@@ -4,6 +4,10 @@ CLI art creation tool for engineers. Generate, iterate, and critique AI images f
 
 Muse wraps text-to-image and vision APIs into a session-based workflow — start with a prompt, tweak it with natural language, get AI critique, and browse your iteration history in a local web gallery. Bring your own API keys.
 
+| `muse new "a cozy cabin in a snowy forest, watercolor"` | `muse tweak "add warm golden light from the windows"` |
+|:---:|:---:|
+| ![Step 1](https://github.com/user-attachments/assets/eb2bc52c-4a6b-495c-8032-8b2fb92c9cd9) | ![Step 2](https://github.com/user-attachments/assets/08791ee8-d96c-4118-9167-4ed4f81ecb6e) |
+
 ## Prerequisites
 
 - **Python 3.11+**
