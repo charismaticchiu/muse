@@ -189,6 +189,10 @@ Requires Python 3.11+.
 - **Terminal images**: term-image
 - **Config**: TOML
 
+## Author
+
+Ming-Chang Chiu — [@charismaticchiu](https://github.com/charismaticchiu)
+
 ## License
 
 MIT
